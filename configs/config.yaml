@@ -1,0 +1,75 @@
+data:
+  path: "spam.csv"
+  encoding: "latin-1"
+  test_size: 0.2
+  random_state: 42
+
+preprocessing:
+  max_input_length: 5000
+  short_forms:
+    u: "you"
+    ur: "your"
+    r: "are"
+    hv: "have"
+    won: "win"
+    congrats: "congratulations"
+    y: "why"
+    tmrw: "tomorrow"
+    tdy: "today"
+    pls: "please"
+    plz: "please"
+    thx: "thanks"
+    txt: "text"
+    msg: "message"
+    b4: "before"
+    gr8: "great"
+    m8: "mate"
+    luv: "love"
+    2mrw: "tomorrow"
+    4ever: "forever"
+    asap: "as soon as possible"
+    btw: "by the way"
+    fyi: "for your information"
+    idk: "i do not know"
+    imo: "in my opinion"
+    nvm: "never mind"
+    omg: "oh my god"
+    smh: "shaking my head"
+    tbh: "to be honest"
+    tldr: "too long did not read"
+    wtf: "what the"
+    brb: "be right back"
+
+model:
+  save_dir: "models"
+  name: "spam_classifier"
+  tfidf:
+    max_features: 10000
+    ngram_range: [1, 2]
+    sublinear_tf: true
+    min_df: 2
+  logistic_regression:
+    max_iter: 1000
+    class_weight: "balanced"
+    C: 1.0
+    solver: "lbfgs"
+  svm:
+    max_iter: 1000
+    class_weight: "balanced"
+    C: 1.0
+  naive_bayes:
+    alpha: 0.1
+  top_features: 10
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  rate_limit: "100/minute"
+  max_input_length: 5000
+
+logging:
+  level: "INFO"
+  dir: "logs"
+  rotation: "10 MB"
+  retention: "1 week"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"

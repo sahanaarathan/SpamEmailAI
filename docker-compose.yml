@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  # ─── Training (run once to produce models/) ─────────────────────────────────
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python scripts/train.py
+    volumes:
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./spam.csv:/app/spam.csv:ro
+    profiles:
+      - train
+
+  # ─── API ────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ─── Streamlit UI ────────────────────────────────────────────────────────────
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    environment:
+      - USE_API=true
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  models:
+  logs:
