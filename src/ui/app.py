@@ -47,23 +47,36 @@ st.markdown(
 
 # ─── Predictor Setup (Direct Mode) ────────────────────────────────────────────
 
-@st.cache_resource(show_spinner="Loading model...")
+@st.cache_resource(show_spinner="Setting up model...")
 def load_predictor():
-    """Load predictor directly (no API). Cached across sessions."""
+    """Load predictor directly (no API). Auto-trains if model not found. Cached across sessions."""
     import yaml
     from src.model.predictor import SpamPredictor
     from src.data.preprocessor import TextPreprocessor
+    from src.model.trainer import ModelTrainer
 
     config_path = ROOT / "configs" / "config.yaml"
     with open(config_path) as f:
         config = yaml.safe_load(f)
+
+    model_dir = ROOT / config["model"]["save_dir"]
+    model_file = model_dir / "model.joblib"
+
+    # Auto-train if model not found (e.g. first run on Streamlit Cloud)
+    if not model_file.exists():
+        with st.spinner("First run — training model... this takes ~30 seconds."):
+            # Update data path to be relative to project root
+            config["data"]["path"] = str(ROOT / config["data"]["path"])
+            config["model"]["save_dir"] = str(model_dir)
+            trainer = ModelTrainer(config)
+            trainer.run()
 
     preprocessor = TextPreprocessor(
         short_forms=config["preprocessing"].get("short_forms"),
         max_input_length=config["preprocessing"].get("max_input_length", 5000),
     )
     predictor = SpamPredictor(
-        model_dir=str(ROOT / config["model"]["save_dir"]),
+        model_dir=str(model_dir),
         preprocessor=preprocessor,
     )
     predictor.load()
